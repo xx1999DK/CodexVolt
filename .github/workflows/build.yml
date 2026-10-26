@@ -1,0 +1,26 @@
+name: macOS build
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test quota semantics
+        run: bash scripts/test.sh
+      - name: Build Apple Silicon
+        run: CODEXVOLT_ARCH=arm64 bash scripts/build.sh
+      - name: Build Intel (cross-compiled; hardware validation pending)
+        run: CODEXVOLT_ARCH=x86_64 bash scripts/build.sh
+      - name: Checksums
+        run: cd dist && shasum -a 256 *.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CodexVolt-macOS
+          path: dist/
